@@ -1,0 +1,9 @@
+# start semihosting in background
+openocd -f /usr/share/openocd/scripts/board/stm32f0discovery.cfg
+(Ctrl + Z)
+bg
+
+# start debug session
+gdb-multiarch build/EDS-Assignment-5.elf -ex "target ext localhost:3333" -ex "monitor arm semihosting enable"
+load
+c
