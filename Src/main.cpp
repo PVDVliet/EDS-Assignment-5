@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <stm32f051x8.h>
 
+#define CALCULATE_PRESCALER(f) (SystemCoreClock/(2*f))-1
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 extern "C" void initialise_monitor_handles(void);
 
-uint32_t i = 0;
+volatile uint32_t i = 0;
 
 extern "C" void EXTI0_1_IRQHandler()
 {
@@ -18,7 +19,6 @@ extern "C" void EXTI0_1_IRQHandler()
 
 extern "C" void TIM3_IRQHandler()
 {
-	TIM3->SR &= ~TIM_SR_TIF;
 	TIM3->SR &= ~TIM_SR_CC1IF;
 
 	i++;
@@ -27,7 +27,7 @@ extern "C" void TIM3_IRQHandler()
 int main(void)
 {
 	initialise_monitor_handles();
-
+	
 	//HAL_Init();
 
 	//SystemClock_Config();
@@ -46,13 +46,14 @@ int main(void)
 
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
 
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 	// timer setup using TIM3 channel 1
-	TIM3->CCR1 = 1000; // set compare value to 1
+	TIM3->CCR1 = 2; // set compare value to 1
 	TIM3->ARR = 1; // set auto reload value to 0
-	TIM3->PSC = 4799; // set counter clock frequency to 1000 hertz (T = 1ms)
+	TIM3->PSC = CALCULATE_PRESCALER(1000); // set counter clock frequency to 1000 hertz (T = 1ms)
 
 	TIM3->DIER |= TIM_DIER_CC1IE; // enable interrupt
-	TIM3->CCMR1 |= (0b001 << TIM_CCMR1_OC1M_Pos); // set output mode to set active level
+	//TIM3->CCMR1 |= (0b001 << TIM_CCMR1_OC1M_Pos); // set output mode to set active level
 
 	//TIM3->CNT = 0; // reset timer counter
 	TIM3->CR1 |= TIM_CR1_CEN; // enable timer
@@ -60,6 +61,15 @@ int main(void)
 	NVIC_EnableIRQ(TIM3_IRQn);
 
 	//TIM3->EGR |= TIM_EGR_CC1G;
+
+	//printf("CCR1: %lu\n", TIM3->CCR1);
+	//printf("ARR: %lu\n", TIM3->ARR);
+	//printf("PSC: %lu\n", TIM3->PSC);
+	//printf("DIER: %lu\n", TIM3->DIER);
+	//printf("CR1: %lu\n", TIM3->CR1);
+    //printf("EGR: %lx\n", TIM3->EGR);
+
+	TIM_TypeDef* t = TIM3;
 
 	while (1)
 	{
@@ -69,9 +79,9 @@ int main(void)
 			GPIOA->ODR ^= GPIO_ODR_10;
 		}
 
-		printf("CNT: %lu\n", TIM3->CNT);
-		printf("SR: %lx\n", TIM3->SR);
-		printf("i: %lu\n", i);
+		//printf("CNT: %lu\n", TIM3->CNT);
+		//printf("SR: %lx\n", TIM3->SR);
+		//printf("i: %lu\n", i);
 	}
 }
 
