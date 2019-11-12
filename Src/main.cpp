@@ -28,9 +28,6 @@ int main(void)
 {
 	initialise_monitor_handles();
 	
-	//HAL_Init();
-
-	//SystemClock_Config();
 	MX_GPIO_Init();
 
 	GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10) | (0b01 << GPIO_MODER_MODER10_Pos);
@@ -39,37 +36,20 @@ int main(void)
 	GPIOC->MODER &= ~GPIO_MODER_MODER0;
 	GPIOC->PUPDR = (GPIOC->PUPDR & ~GPIO_PUPDR_PUPDR0) | (0b01 << GPIO_PUPDR_PUPDR0_Pos);
 
+	// PC0 interrupt setup
 	SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~SYSCFG_EXTICR1_EXTI0) | (0b0010 << SYSCFG_EXTICR1_EXTI0_Pos);
-
 	EXTI->FTSR |= EXTI_FTSR_TR0;
 	EXTI->IMR |= EXTI_IMR_MR0;
-
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
 
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 	// timer setup using TIM3 channel 1
-	TIM3->CCR1 = 2; // set compare value to 1
-	TIM3->ARR = 1; // set auto reload value to 0
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // enable TIM3
+	TIM3->CCR1 = 2; // set compare value to 2
+	TIM3->ARR = 1; // set auto reload value to 1
 	TIM3->PSC = CALCULATE_PRESCALER(1000); // set counter clock frequency to 1000 hertz (T = 1ms)
-
 	TIM3->DIER |= TIM_DIER_CC1IE; // enable interrupt
-	//TIM3->CCMR1 |= (0b001 << TIM_CCMR1_OC1M_Pos); // set output mode to set active level
-
-	//TIM3->CNT = 0; // reset timer counter
 	TIM3->CR1 |= TIM_CR1_CEN; // enable timer
-
 	NVIC_EnableIRQ(TIM3_IRQn);
-
-	//TIM3->EGR |= TIM_EGR_CC1G;
-
-	//printf("CCR1: %lu\n", TIM3->CCR1);
-	//printf("ARR: %lu\n", TIM3->ARR);
-	//printf("PSC: %lu\n", TIM3->PSC);
-	//printf("DIER: %lu\n", TIM3->DIER);
-	//printf("CR1: %lu\n", TIM3->CR1);
-    //printf("EGR: %lx\n", TIM3->EGR);
-
-	TIM_TypeDef* t = TIM3;
 
 	while (1)
 	{
@@ -78,10 +58,6 @@ int main(void)
 			i = 0;
 			GPIOA->ODR ^= GPIO_ODR_10;
 		}
-
-		//printf("CNT: %lu\n", TIM3->CNT);
-		//printf("SR: %lx\n", TIM3->SR);
-		//printf("i: %lu\n", i);
 	}
 }
 
