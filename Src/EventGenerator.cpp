@@ -23,6 +23,8 @@ Event EventGenerator::GetEvent()
             return (Event)(i + 1);
         }
     }
+
+    return EV_NO_EVENT;
 }
 
 void EventGenerator::PushEvent(Event ev)

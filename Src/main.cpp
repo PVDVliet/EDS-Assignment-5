@@ -14,24 +14,22 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 extern "C" void initialise_monitor_handles(void);
 
-IButton* button0;
-IButton* button1;
-ITimerManager* timMan;
+volatile IButton* button0;
+volatile IButton* button1;
+volatile ITimerManager* timMan;
 
 extern "C" void EXTI0_1_IRQHandler()
 {
-	if (EXTI->PR & EXTI_PR_PIF0)
-	{
-		EXTI->PR |= EXTI_PR_PIF0;
+	EXTI->PR |= EXTI_PR_PIF0;
 
-		((Button*)button0)->Update();
-	}
-	else if (EXTI->PR & EXTI_PR_PIF1)
-	{
-		EXTI->PR |= EXTI_PR_PIF1;
+	((Button*)button0)->Update();
+}
 
-		((Button*)button1)->Update();
-	}
+extern "C" void EXTI2_3_IRQHandler()
+{
+	EXTI->PR |= EXTI_PR_PIF2;
+
+	((Button*)button1)->Update();
 }
 
 extern "C" void TIM3_IRQHandler()
@@ -52,10 +50,10 @@ int main(void)
 	Timer tim0;
 	Timer tim1;
 	button0 = new Button(GPIOC, 0U, eventGenerator, tim0, EV_BUTTON0_PRESSED, EV_BUTTON0_PRESSED_LONG);
-	button1 = new Button(GPIOC, 1U, eventGenerator, tim1, EV_BUTTON1_PRESSED, EV_BUTTON1_PRESSED_LONG);
+	button1 = new Button(GPIOC, 2U, eventGenerator, tim1, EV_BUTTON1_PRESSED, EV_BUTTON1_PRESSED_LONG);
 	
-	timMan->AddTimer(&tim1);
-	timMan->AddTimer(&tim0);
+	((TimerManager*)timMan)->AddTimer(&tim0);
+	((TimerManager*)timMan)->AddTimer(&tim1);
 
 	Led led0(GPIOA, 10);
 	Led led1(GPIOA, 9);
@@ -69,15 +67,14 @@ int main(void)
 	EXTI->FTSR |= EXTI_FTSR_TR0;
 	EXTI->RTSR |= EXTI_RTSR_TR0;
 	EXTI->IMR |= EXTI_IMR_MR0;
-	
-	// PC1 interrupt setup
-	SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~SYSCFG_EXTICR1_EXTI1) | (0b0010 << SYSCFG_EXTICR1_EXTI1_Pos);
-	EXTI->FTSR |= EXTI_FTSR_TR1;
-	EXTI->RTSR |= EXTI_RTSR_TR1;
-	EXTI->IMR |= EXTI_IMR_MR1;
-
-	// enable EXTI0_1_IRQn
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
+	
+	// PC2 interrupt setup
+	SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~SYSCFG_EXTICR1_EXTI2) | (0b0010 << SYSCFG_EXTICR1_EXTI2_Pos);
+	EXTI->FTSR |= EXTI_FTSR_TR2;
+	EXTI->RTSR |= EXTI_RTSR_TR2;
+	EXTI->IMR |= EXTI_IMR_MR2;
+	NVIC_EnableIRQ(EXTI2_3_IRQn);
 
 	// timer setup using TIM3 channel 1
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // enable TIM3

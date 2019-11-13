@@ -1,5 +1,7 @@
 #include "Button.h"
 
+#include <stdio.h>
+
 Button::Button(GPIO_TypeDef* port, uint8_t pin, IEventGenerator& eventGenerator, ITimer& timer, Event shortPress, Event longPress)
     : m_eventGenerator(eventGenerator)
     , m_timer(timer)

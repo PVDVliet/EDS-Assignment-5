@@ -77,16 +77,16 @@ void LedController::HandleIdleState(Event ev)
     switch (ev)
     {
         case EV_BUTTON0_PRESSED:
-            if (m_leds[1] != nullptr)
+            if (m_leds[0] != nullptr)
             {
-                m_leds[1]->Set();
+                m_leds[0]->Set();
             }
             break;
 
         case EV_BUTTON0_PRESSED_LONG:
-            if (m_leds[1] != nullptr)
+            if (m_leds[0] != nullptr)
             {
-                m_leds[1]->Reset();
+                m_leds[0]->Reset();
             }
             break;
 
