@@ -1,17 +1,11 @@
 #include "LedController.h"
 
-LedController::LedController(IEventGenerator& eventGenerator, uint32_t capacity)
+LedController::LedController(IEventGenerator& eventGenerator)
     : m_eventGenerator(eventGenerator)
     , m_currentState(STATE_IDLE)
     , m_run(true)
 {
-    if (capacity == 0)
-    {
-        throw EX_OUT_OF_RANGE;
-    }
-    m_capacity = capacity;
-    m_leds = new ILed*[capacity];
-    for (uint32_t i = 0; i < capacity; i++)
+    for (uint32_t i = 0; i < MAX_LED; i++)
     {
         m_leds[i] = nullptr;
     }
@@ -20,7 +14,6 @@ LedController::LedController(IEventGenerator& eventGenerator, uint32_t capacity)
 LedController::~LedController()
 {
     Stop();
-    delete[] m_leds;
 }
 
 void LedController::Run()
@@ -38,7 +31,7 @@ void LedController::Stop()
 
 uint32_t LedController::AddLed(ILed& led)
 {
-    for (uint32_t i = 0; i < m_capacity; i++)
+    for (uint32_t i = 0; i < MAX_LED; i++)
     {
         if (m_leds[i] == nullptr)
         {
@@ -51,17 +44,17 @@ uint32_t LedController::AddLed(ILed& led)
 
 void LedController::RemoveLed(uint32_t handle)
 {
-    if (handle == 0 || handle > m_capacity)
+    if (handle == 0 || handle > MAX_LED)
     {
         throw EX_INVALID_ARGUMENT;
     }
 
-    m_leds[handle - 1] == nullptr;
+    m_leds[handle - 1] = nullptr;
 }
 
 ILed* LedController::GetLed(uint32_t handle)
 {
-    if (handle == 0 || handle > m_capacity)
+    if (handle == 0 || handle > MAX_LED)
     {
         throw EX_INVALID_ARGUMENT;
     }
@@ -84,16 +77,16 @@ void LedController::HandleIdleState(Event ev)
     switch (ev)
     {
         case EV_BUTTON0_PRESSED:
-            if (m_leds[0] != nullptr)
+            if (m_leds[1] != nullptr)
             {
-                m_leds[0]->Set();
+                m_leds[1]->Set();
             }
             break;
 
         case EV_BUTTON0_PRESSED_LONG:
-            if (m_leds[0] != nullptr)
+            if (m_leds[1] != nullptr)
             {
-                m_leds[0]->Reset();
+                m_leds[1]->Reset();
             }
             break;
 

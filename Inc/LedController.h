@@ -7,6 +7,7 @@
 #include "ILed.h"
 
 #include <stdint.h>
+#define MAX_LED 2
 
 enum State
 {
@@ -16,8 +17,7 @@ enum State
 class LedController
 {
     public:
-        LedController(IEventGenerator& eventGenerator,
-            uint32_t capacity);
+        LedController(IEventGenerator& eventGenerator);
         ~LedController();
 
         void Run();
@@ -27,9 +27,8 @@ class LedController
         ILed* GetLed(uint32_t handle);
 
     private:
-        uint32_t m_capacity;
         IEventGenerator& m_eventGenerator;
-        ILed** m_leds;
+        ILed* m_leds[MAX_LED];
         State m_currentState;
         bool m_run;
 

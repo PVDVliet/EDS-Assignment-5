@@ -10,7 +10,7 @@ class Timer : public ITimer
     public:
         Timer() : Timer(0) { }
         Timer(uint64_t time) : m_time(time) { }
-        ~Timer();
+        ~Timer() { }
 
         // ITimer
         uint64_t GetTime() const { return m_time; }

@@ -1,8 +1,10 @@
 #include "main.h"
 #include "Button.h"
+#include "EventGenerator.h"
+#include "Led.h"
+#include "LedController.h"
 #include "Timer.h"
 #include "TimerManager.h"
-#include "EventGenerator.h"
 
 #include <stdio.h>
 #include <stm32f051x8.h>
@@ -24,7 +26,7 @@ extern "C" void EXTI0_1_IRQHandler()
 
 		((Button*)button0)->Update();
 	}
-	else
+	else if (EXTI->PR & EXTI_PR_PIF1)
 	{
 		EXTI->PR |= EXTI_PR_PIF1;
 
@@ -45,11 +47,22 @@ int main(void)
 	
 	MX_GPIO_Init();
 
-	//GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10) | (0b01 << GPIO_MODER_MODER10_Pos);
-	//GPIOA->OTYPER &= ~GPIO_OTYPER_OT_10;
+	EventGenerator eventGenerator;
+	timMan = new TimerManager(2);
+	Timer tim0;
+	Timer tim1;
+	button0 = new Button(GPIOC, 0U, eventGenerator, tim0, EV_BUTTON0_PRESSED, EV_BUTTON0_PRESSED_LONG);
+	button1 = new Button(GPIOC, 1U, eventGenerator, tim1, EV_BUTTON1_PRESSED, EV_BUTTON1_PRESSED_LONG);
+	
+	timMan->AddTimer(&tim1);
+	timMan->AddTimer(&tim0);
 
-	//GPIOC->MODER &= ~GPIO_MODER_MODER0;
-	GPIOC->PUPDR = (GPIOC->PUPDR & ~GPIO_PUPDR_PUPDR0) | (0b01 << GPIO_PUPDR_PUPDR0_Pos);
+	Led led0(GPIOA, 10);
+	Led led1(GPIOA, 9);
+	LedController controller(eventGenerator);
+
+	controller.AddLed(led0);
+	controller.AddLed(led1);
 	
 	// PC0 interrupt setup
 	SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~SYSCFG_EXTICR1_EXTI0) | (0b0010 << SYSCFG_EXTICR1_EXTI0_Pos);
@@ -75,19 +88,8 @@ int main(void)
 	TIM3->CR1 |= TIM_CR1_CEN; // enable timer
 	NVIC_EnableIRQ(TIM3_IRQn);
 
-	EventGenerator eventGenerator;
-	timMan = new TimerManager(2);
-	Timer tim0;
-	Timer tim1;
-	button0 = new Button(GPIOC, 0U, eventGenerator, tim0, EV_BUTTON0_PRESSED, EV_BUTTON0_PRESSED_LONG);
-	button1 = new Button(GPIOC, 1U, eventGenerator, tim1, EV_BUTTON1_PRESSED, EV_BUTTON1_PRESSED_LONG);
-	
-	timMan->AddTimer(&tim0);
-	timMan->AddTimer(&tim1);
-
-	// make ledcontroller
-
-	GPIO_TypeDef i;
+	// infinite loop
+	controller.Run();
 }
 
 /**

@@ -1,6 +1,8 @@
 #ifndef ITIMER_H
 #define ITIMER_H
 
+#include <inttypes.h>
+
 class ITimer
 {
     public:

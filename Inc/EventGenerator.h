@@ -4,7 +4,7 @@
 #include "Event.h"
 #include "IEventGenerator.h"
 
-class EventGenerator
+class EventGenerator : public IEventGenerator
 {
     public:
         EventGenerator();

@@ -61,7 +61,12 @@ startup_stm32f051x8.s
 
 # C++ sources
 CPP_SOURCES = \
-Src/main.cpp
+Src/main.cpp \
+Src/Button.cpp \
+Src/EventGenerator.cpp \
+Src/Led.cpp \
+Src/LedController.cpp \
+Src/TimerManager.cpp
 
 
 #######################################
@@ -121,7 +126,6 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Device/ST/STM32F0xx/Include \
 -IDrivers/CMSIS/Include \
 -IDrivers/CMSIS/Include
-
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
