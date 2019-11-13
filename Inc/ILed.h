@@ -4,7 +4,7 @@
 class ILed
 {
     public:
-        virtual ~ILed() {}
+        virtual ~ILed() { }
 
         virtual bool IsOn() const = 0;
 

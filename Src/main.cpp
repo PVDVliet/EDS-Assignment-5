@@ -1,4 +1,8 @@
 #include "main.h"
+#include "Button.h"
+#include "Timer.h"
+#include "TimerManager.h"
+#include "EventGenerator.h"
 
 #include <stdio.h>
 #include <stm32f051x8.h>
@@ -8,20 +12,31 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 extern "C" void initialise_monitor_handles(void);
 
-volatile uint32_t i = 0;
+IButton* button0;
+IButton* button1;
+ITimerManager* timMan;
 
 extern "C" void EXTI0_1_IRQHandler()
 {
-	EXTI->PR |= EXTI_PR_PR0;
+	if (EXTI->PR & EXTI_PR_PIF0)
+	{
+		EXTI->PR |= EXTI_PR_PIF0;
 
-	GPIOA->ODR ^= GPIO_ODR_10;
+		((Button*)button0)->Update();
+	}
+	else
+	{
+		EXTI->PR |= EXTI_PR_PIF1;
+
+		((Button*)button1)->Update();
+	}
 }
 
 extern "C" void TIM3_IRQHandler()
 {
 	TIM3->SR &= ~TIM_SR_CC1IF;
 
-	i++;
+	((TimerManager*)timMan)->Update();
 }
 
 int main(void)
@@ -30,16 +45,25 @@ int main(void)
 	
 	MX_GPIO_Init();
 
-	GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10) | (0b01 << GPIO_MODER_MODER10_Pos);
-	GPIOA->OTYPER &= ~GPIO_OTYPER_OT_10;
+	//GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10) | (0b01 << GPIO_MODER_MODER10_Pos);
+	//GPIOA->OTYPER &= ~GPIO_OTYPER_OT_10;
 
-	GPIOC->MODER &= ~GPIO_MODER_MODER0;
+	//GPIOC->MODER &= ~GPIO_MODER_MODER0;
 	GPIOC->PUPDR = (GPIOC->PUPDR & ~GPIO_PUPDR_PUPDR0) | (0b01 << GPIO_PUPDR_PUPDR0_Pos);
-
+	
 	// PC0 interrupt setup
 	SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~SYSCFG_EXTICR1_EXTI0) | (0b0010 << SYSCFG_EXTICR1_EXTI0_Pos);
 	EXTI->FTSR |= EXTI_FTSR_TR0;
+	EXTI->RTSR |= EXTI_RTSR_TR0;
 	EXTI->IMR |= EXTI_IMR_MR0;
+	
+	// PC1 interrupt setup
+	SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~SYSCFG_EXTICR1_EXTI1) | (0b0010 << SYSCFG_EXTICR1_EXTI1_Pos);
+	EXTI->FTSR |= EXTI_FTSR_TR1;
+	EXTI->RTSR |= EXTI_RTSR_TR1;
+	EXTI->IMR |= EXTI_IMR_MR1;
+
+	// enable EXTI0_1_IRQn
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
 
 	// timer setup using TIM3 channel 1
@@ -51,14 +75,19 @@ int main(void)
 	TIM3->CR1 |= TIM_CR1_CEN; // enable timer
 	NVIC_EnableIRQ(TIM3_IRQn);
 
-	while (1)
-	{
-		if (i > 1000)
-		{
-			i = 0;
-			GPIOA->ODR ^= GPIO_ODR_10;
-		}
-	}
+	EventGenerator eventGenerator;
+	timMan = new TimerManager(2);
+	Timer tim0;
+	Timer tim1;
+	button0 = new Button(GPIOC, 0U, eventGenerator, tim0, EV_BUTTON0_PRESSED, EV_BUTTON0_PRESSED_LONG);
+	button1 = new Button(GPIOC, 1U, eventGenerator, tim1, EV_BUTTON1_PRESSED, EV_BUTTON1_PRESSED_LONG);
+	
+	timMan->AddTimer(&tim0);
+	timMan->AddTimer(&tim1);
+
+	// make ledcontroller
+
+	GPIO_TypeDef i;
 }
 
 /**

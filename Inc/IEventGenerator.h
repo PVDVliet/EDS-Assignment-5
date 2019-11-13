@@ -6,7 +6,7 @@
 class IEventGenerator
 {
     public:
-        virtual ~IEventGenerator() {}
+        virtual ~IEventGenerator() { }
 
         virtual Event GetEvent() = 0;
         virtual void PushEvent(Event ev) = 0;
